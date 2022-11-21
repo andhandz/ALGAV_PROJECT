@@ -1,4 +1,8 @@
-@startuml
+
+<div hidden>
+```
+
+@startuml UC1
 left to right direction
 skinparam packageStyle rectangle
 actor user
@@ -10,3 +14,8 @@ rectangle main {
   (Implement Traveling Salesman Problem for our problem) .> (Analyze Traveling Salesman Problem) : include
 }
 @enduml
+```
+
+</div>
+
+![](UC1.svg)

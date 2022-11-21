@@ -1,4 +1,7 @@
-@startuml
+<div hidden>
+```
+
+@startuml UC2
 left to right direction
 skinparam packageStyle rectangle
 actor user
@@ -15,3 +18,8 @@ rectangle main {
 }
 
 @enduml
+```
+
+</div>
+
+![](UC2.svg)
