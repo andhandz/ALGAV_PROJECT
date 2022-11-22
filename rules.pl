@@ -34,7 +34,7 @@ idStore('Valongo', 15).
 idStore('Vila do Conde', 16).
 idStore('Vila Nova de Gaia', 17).
 
-/dist(<IdCity>, <distance>, <SecondCityId>) /*
+/*dist(<IdCity>, <distance>, <SecondCityId>) */
 dist(1, 0, 1).
 dist(1, 53, 2).
 dist(1, 57 3).
@@ -343,13 +343,13 @@ dist(17, 0, 17).
 
 
 
-/delivery(<id>, <date>, <deliveryMass>, <warehouseId>, <placementTime>, <receiveTime>)./
+%delivery(<id>, <date>, <deliveryMass>, <warehouseId>, <placementTime>, <receiveTime>).
 delivery(4439, 20221205, 200, 1, 8, 10).
 delivery(4438, 20221205, 150, 9, 7, 9).
 delivery(4445, 20221205, 100, 3, 5, 7).
 delivery(4443, 20221205, 120, 8, 6, 8).
 delivery(4449, 20221205, 300, 11, 15, 20).
-/delivery(4398, 20221205, 310, 17, 16, 20).
+/*delivery(4398, 20221205, 310, 17, 16, 20).
 delivery(4432, 20221205, 270, 14, 14, 18).
 delivery(4437, 20221205, 180, 12, 9, 11).
 delivery(4451, 20221205, 220, 6, 9, 12).
@@ -359,7 +359,7 @@ delivery(4455, 20221205, 280, 7, 14, 19).
 delivery(4399, 20221205, 260, 15, 13, 18).
 delivery(4454, 20221205, 350, 10, 18, 22).
 delivery(4446, 20221205, 260, 4, 14, 17).
-delivery(4456, 20221205, 330, 16, 17, 21)./ 
+delivery(4456, 20221205, 330, 16, 17, 21).*/ 
 
 truck(eTruck01).
 truck(eTruck02).
@@ -367,7 +367,7 @@ truck(eTruck03).
 truck(eTruck04).
 truck(eTruck05).
 
-characteristicsTruck(eTruck01, 7500, 4300, 80, 100, 60). /truckname, tare, loadCap, totBattery, range, BatteryFrom20to80/*
+characteristicsTruck(eTruck01, 7500, 4300, 80, 100, 60). /*truckname, tare, loadCap, totBattery, range, BatteryFrom20to80*/
 
 pathData(eTruck01,1,2,122,42,0).
 pathData(eTruck01,1,3,122,46,0).
@@ -657,3 +657,83 @@ pathData(eTruck01,17,13,82,23,0).
 pathData(eTruck01,17,14,90,38,0).
 pathData(eTruck01,17,15,53,18,0).
 pathData(eTruck01,17,16,67,25,0).
+
+factory(5).
+/*Phase 1*/
+
+sum_weights([],[],0).
+sum_weights([City|LC],[WeightCurrent|LP],WeightCurrent):-
+sum_weights(LC,LW,WeightCurrent1),delivery(_,_,Weight,City),WeightCurrent is Weight+WeightCurrent1.
+
+
+add_TruckWeight(Tare,[],[Tare]).
+add_TruckWeight(Tare,[Weight|LW],[TruckWeight|LWT]):-
+add_TruckWeight(Tare,LW,LWT),
+TruckWeight is Weight+Tare.
+
+
+calculate_cost(LC,Cost):-
+sum_weights(LC,LW,_),
+characteristicsTruck(eTruck01,Tare,_,_,_,_),
+add_TruckWeight(Tare,LW,LWT),
+factory(F),
+append([F|LC],[F],LCcomplete),
+cost(LCcomplete,LWT,Cost).
+
+cost([_],[],0).
+cost([C1,C2|LC],[WT|LWT],Cost):-
+cost([C2|LC],LWT,Cost1),
+(dist(C1,C2,Dist);dist(C2,C1,Dist)),
+Cost is Cost1+Dist*WT.
+
+
+seq_cost_min(LC,Cost):-(run;true),cost_min(LC,Cost).
+
+run:- retractall(cost_min(_,_)), assertz(cost_min(_,100000)),
+findall(City,city(City,_),LC),
+permutation(LC,LCPerm),
+calculate_cost(LCPerm,Cost),
+update(LCPerm,Cost),
+fail.
+
+update(LCPerm,Cost):-
+cost_min(_,CostMin),
+((Cost<CostMin,!,retract(cost_min(_,_)),assertz(cost_min(LCPerm,Cost)),
+write(Cost),nl);true).
+
+/*Phase 2*/
+
+cities([1,2,3,4]). %placeholder
+
+calculate_cost_2(LS,Time,LCharging):-
+ factory(SP),
+ append([SP|LS],[SP],LScomplete),
+ characteristicsTruck(eTruck01, 7500, 4300, 80, Autonomy, 60),
+ cost(LScomplete, Autonomy, Time, LCharging).
+ 
+cost_2([_],_,0,[]).
+cost_2([S1,S2|LS], Autonomy, Time, LCharging):-
+ ((dist(S1,S2,Dist,T),pathData(_,S1,S2,T,_,_));(dist(S2,S1,Dist,T),pathData(_,S2,S1,T,_,_))),
+ ((Autonomy<Dist,!, characteristicsTruck(eTruck01,_,_,_,A,TCharge), A1 is A-Dist, LCharging = [S1|LPreviousCharges]);
+ (A1 is Autonomy-Dist, TCharge is 0, LCharging = LPreviousCharges)),
+ cost_2([S2|LS],A1,Time1,LPreviousCharges),
+ Time is TCharge+T+Time1.
+ 
+ 
+min_time_seq(LC,LCharging,Time):-(run_2;true),minTime(LC,LCharging,Time).
+ 
+run_2:-
+ retractall(minTime(_,_,_)),
+ assertz(minTime(_,_,100000)),
+ cities(LCities),
+ permutation(LCities,LCitiesPerm),
+ calculate_cost_2(LCitiesPerm,Time,LCharging),
+ update_2(LCitiesPerm,Time,LCharging),
+ fail.
+ 
+update_2(LCPerm,Time,LCharging):-
+ minTime(_,_,MinTime),
+ ((Time<MinTime,!, retract(minTime(_,_,_)), assertz(minTime(LEPerm,LCharging,Time)),
+ write('Time='),write(Time), write(' '),write(LCPerm), write(' with recharges at '),write(LCharging),nl)
+ ;true).
+ 
