@@ -1,20 +1,20 @@
-city(Arouca).
-city(Espinho).
-city(Gondomar).
-city(Maia).
-city(Matosinhos).
-city(Oliveira de Azemeis).
-city(Paredes).
-city(Porto).
-city(Povoa de Varzim).
-city(Santa Maria da Feira).
-city(Santo Tirso).
-city(Sao Joao da Madeira).
-city(Trofa).
-city(Vale de Cambra).
-city(Valongo).
-city(Vila do Conde).
-city(Vila Nova de Gaia).
+city('Arouca').
+city('Espinho').
+city('Gondomar').
+city('Maia').
+city('Matosinhos').
+city('Oliveira de Azemeis').
+city('Paredes').
+city('Porto').
+city('Povoa de Varzim').
+city('Santa Maria da Feira').
+city('Santo Tirso').
+city('Sao Joao da Madeira').
+city('Trofa').
+city('Vale de Cambra').
+city('Valongo').
+city('Vila do Conde').
+city('Vila Nova de Gaia').
 
 idStore('Arouca', 1).
 idStore('Espinho', 2).
@@ -37,7 +37,7 @@ idStore('Vila Nova de Gaia', 17).
 /*dist(<IdCity>, <distance>, <SecondCityId>) */
 dist(1, 0, 1).
 dist(1, 53, 2).
-dist(1, 57 3).
+dist(1, 57, 3).
 dist(1, 67, 4).
 dist(1, 65, 5).
 dist(1, 30, 6).
@@ -662,8 +662,8 @@ factory(5).
 /*Phase 1*/
 
 sum_weights([],[],0).
-sum_weights([City|LC],[WeightCurrent|LP],WeightCurrent):-
-sum_weights(LC,LW,WeightCurrent1),delivery(_,_,Weight,City),WeightCurrent is Weight+WeightCurrent1.
+sum_weights([City|LC],[WeightCurrent|LW],WeightCurrent):-
+sum_weights(LC,LW,WeightCurrent1),delivery(_,_,Weight,City,_,_),WeightCurrent is Weight+WeightCurrent1.
 
 
 add_TruckWeight(Tare,[],[Tare]).
@@ -683,14 +683,14 @@ cost(LCcomplete,LWT,Cost).
 cost([_],[],0).
 cost([C1,C2|LC],[WT|LWT],Cost):-
 cost([C2|LC],LWT,Cost1),
-(dist(C1,C2,Dist);dist(C2,C1,Dist)),
+dist(C1,Dist,C2),
 Cost is Cost1+Dist*WT.
 
 
 seq_cost_min(LC,Cost):-(run;true),cost_min(LC,Cost).
 
-run:- retractall(cost_min(_,_)), assertz(cost_min(_,100000)),
-findall(City,city(City,_),LC),
+run:- retractall(cost_min(_,_)), assertz(cost_min(_,1000000000000000)),
+findall(City,delivery(_,_,_,City,_,_),LC),
 permutation(LC,LCPerm),
 calculate_cost(LCPerm,Cost),
 update(LCPerm,Cost),
@@ -703,17 +703,15 @@ write(Cost),nl);true).
 
 /*Phase 2*/
 
-cities([1,2,3,4]). %placeholder
-
 calculate_cost_2(LS,Time,LCharging):-
  factory(SP),
  append([SP|LS],[SP],LScomplete),
  characteristicsTruck(eTruck01, 7500, 4300, 80, Autonomy, 60),
- cost(LScomplete, Autonomy, Time, LCharging).
+ cost_2(LScomplete, Autonomy, Time, LCharging).
  
 cost_2([_],_,0,[]).
 cost_2([S1,S2|LS], Autonomy, Time, LCharging):-
- ((dist(S1,S2,Dist,T),pathData(_,S1,S2,T,_,_));(dist(S2,S1,Dist,T),pathData(_,S2,S1,T,_,_))),
+ dist(S1,Dist,S2),pathData(_,S1,S2,T,_,_),
  ((Autonomy<Dist,!, characteristicsTruck(eTruck01,_,_,_,A,TCharge), A1 is A-Dist, LCharging = [S1|LPreviousCharges]);
  (A1 is Autonomy-Dist, TCharge is 0, LCharging = LPreviousCharges)),
  cost_2([S2|LS],A1,Time1,LPreviousCharges),
@@ -725,7 +723,7 @@ min_time_seq(LC,LCharging,Time):-(run_2;true),minTime(LC,LCharging,Time).
 run_2:-
  retractall(minTime(_,_,_)),
  assertz(minTime(_,_,100000)),
- cities(LCities),
+ findall(City,delivery(_,_,_,City,_,_),LCities),
  permutation(LCities,LCitiesPerm),
  calculate_cost_2(LCitiesPerm,Time,LCharging),
  update_2(LCitiesPerm,Time,LCharging),
