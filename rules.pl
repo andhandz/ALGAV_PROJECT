@@ -349,8 +349,8 @@ delivery(4438, 20221205, 150, 9, 7, 9).
 delivery(4445, 20221205, 100, 3, 5, 7).
 delivery(4443, 20221205, 120, 8, 6, 8).
 delivery(4449, 20221205, 300, 11, 15, 20).
-delivery(4398, 20221205, 310, 17, 16, 20).
-/*delivery(4432, 20221205, 270, 14, 14, 18).
+/*delivery(4398, 20221205, 310, 17, 16, 20).
+delivery(4432, 20221205, 270, 14, 14, 18).
 delivery(4437, 20221205, 180, 12, 9, 11).
 delivery(4451, 20221205, 220, 6, 9, 12).
 delivery(4452, 20221205, 390, 13, 21, 26).
@@ -714,11 +714,11 @@ calculate_cost_2(LS,Time,LCharging):-
  
 cost_2([_],_,_,0,[]).
 cost_2([S1,S2|LS], [WT|LWT], CEnergy, Time, LCharging):-
-pathData(_,S1,S2,T,En,Ex_T),characteristicsTruck(eTruck01,Ta,ML,E,_,TCharge),NEn is En*(Ta+ML)/WT,
- ((CEnergy-NEn<E*2/10,!, TCharge1 is (E*8/10-CEnergy)*TCharge/(6/10*E), E1 is max(2/10*E, 8/10*E- NEn), LCharging = [S1|LPreviousCharges]);
+pathData(_,S1,S2,T,En,Ex_T),characteristicsTruck(eTruck01,Ta,ML,E,_,TCharge),NEn is En*WT/(Ta+ML), 
+ ((CEnergy-NEn<E*2/10,!, ((S2 is 5, TCharge1 is (max(0,NEn+2/10*E-CEnergy))*TCharge/(6/10*E)); (TCharge1 is (E*8/10-CEnergy)*TCharge/(6/10*E))), E1 is max(2/10*E, 8/10*E- NEn), LCharging = [S1|LPreviousCharges]);
  (TCharge1 is 0, E1 is CEnergy-NEn, LCharging = LPreviousCharges)),
- cost_2([S2|LS],LWT,E1,Time1,LPreviousCharges), ((S1 is 5, RT is 0);delivery(_,_,_,S1,_,RT)),
- Time is max(TCharge1,RT)+T*(Ta+ML)/WT+Time1+Ex_T.
+ cost_2([S2|LS],LWT,E1,Time1,LPreviousCharges), ((S1 is 5, Ex1_T is 0, RT is 0);(delivery(_,_,_,S1,_,RT), Ex1_T is Ex_T)),
+ Time is max(TCharge1,RT)+T*WT/(Ta+ML)+Time1+Ex1_T.
  
  
 min_time_seq(LC,LCharging,Time):- get_time(Ti), (run_2;true),minTime(LC,LCharging,Time), get_time(Tf), T is Tf-Ti, write("Time to generate solution is "), write(T), write("sec").
