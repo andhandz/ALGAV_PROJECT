@@ -349,8 +349,8 @@ delivery(4438, 20221205, 150, 9, 7, 9).
 delivery(4445, 20221205, 100, 3, 5, 7).
 delivery(4443, 20221205, 120, 8, 6, 8).
 delivery(4449, 20221205, 300, 11, 15, 20).
-/*delivery(4398, 20221205, 310, 17, 16, 20).
-delivery(4432, 20221205, 270, 14, 14, 18).
+delivery(4398, 20221205, 310, 17, 16, 20).
+/*delivery(4432, 20221205, 270, 14, 14, 18).
 delivery(4437, 20221205, 180, 12, 9, 11).
 delivery(4451, 20221205, 220, 6, 9, 12).
 delivery(4452, 20221205, 390, 13, 21, 26).
@@ -721,7 +721,7 @@ pathData(_,S1,S2,T,En,Ex_T),characteristicsTruck(eTruck01,Ta,ML,E,_,TCharge),NEn
  Time is max(TCharge1,RT)+T*(Ta+ML)/WT+Time1+Ex_T.
  
  
-min_time_seq(LC,LCharging,Time):-(run_2;true),minTime(LC,LCharging,Time).
+min_time_seq(LC,LCharging,Time):- get_time(Ti), (run_2;true),minTime(LC,LCharging,Time), get_time(Tf), T is Tf-Ti, write("Time to generate solution is "), write(T), write("sec").
  
 run_2:-
  retractall(minTime(_,_,_)),
