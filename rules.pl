@@ -683,8 +683,9 @@ cost(LCcomplete,LWT,Cost).
 cost([_],[],0).
 cost([C1,C2|LC],[WT|LWT],Cost):-
 cost([C2|LC],LWT,Cost1),
-dist(C1,Dist,C2),
-Cost is Cost1+Dist*WT.
+pathData(_,C1,C2,T,_,_),
+characteristicsTruck(eTruck01,Ta,ML,_,_,_),
+Cost is Cost1+T*WT/(Ta+ML).
 
 
 seq_cost_min(LC,Cost):-(run;true),cost_min(LC,Cost).
@@ -704,18 +705,20 @@ write(Cost),nl);true).
 /*Phase 2*/
 
 calculate_cost_2(LS,Time,LCharging):-
+ sum_weights(LS,LW,_),
+ characteristicsTruck(eTruck01,Tare,_,Energy,_,_),
+ add_TruckWeight(Tare,LW,LWT),
  factory(SP),
  append([SP|LS],[SP],LScomplete),
- characteristicsTruck(eTruck01, 7500, 4300, 80, Autonomy, 60),
- cost_2(LScomplete, Autonomy, Time, LCharging).
+ cost_2(LScomplete, LWT, Energy, Time, LCharging).
  
-cost_2([_],_,0,[]).
-cost_2([S1,S2|LS], Autonomy, Time, LCharging):-
- dist(S1,Dist,S2),pathData(_,S1,S2,T,_,_),
- ((Autonomy<Dist,!, characteristicsTruck(eTruck01,_,_,_,A,TCharge), A1 is A-Dist, LCharging = [S1|LPreviousCharges]);
- (A1 is Autonomy-Dist, TCharge is 0, LCharging = LPreviousCharges)),
- cost_2([S2|LS],A1,Time1,LPreviousCharges),
- Time is TCharge+T+Time1.
+cost_2([_],_,_,0,[]).
+cost_2([S1,S2|LS], [WT|LWT], CEnergy, Time, LCharging):-
+pathData(_,S1,S2,T,En,Ex_T),characteristicsTruck(eTruck01,Ta,ML,E,_,TCharge),NEn is En*(Ta+ML)/WT,
+ ((CEnergy-NEn<E*2/10,!, TCharge1 is (E*8/10-CEnergy)*TCharge/(6/10*E), E1 is max(2/10*E, 8/10*E- NEn), LCharging = [S1|LPreviousCharges]);
+ (TCharge1 is 0, E1 is CEnergy-NEn, LCharging = LPreviousCharges)),
+ cost_2([S2|LS],LWT,E1,Time1,LPreviousCharges), ((S1 is 5, RT is 0);delivery(_,_,_,S1,_,RT)),
+ Time is max(TCharge1,RT)+T*(Ta+ML)/WT+Time1+Ex_T.
  
  
 min_time_seq(LC,LCharging,Time):-(run_2;true),minTime(LC,LCharging,Time).
@@ -731,7 +734,7 @@ run_2:-
  
 update_2(LCPerm,Time,LCharging):-
  minTime(_,_,MinTime),
- ((Time<MinTime,!, retract(minTime(_,_,_)), assertz(minTime(LEPerm,LCharging,Time)),
+ ((Time<MinTime,!, retract(minTime(_,_,_)), assertz(minTime(LCPerm,LCharging,Time)),
  write('Time='),write(Time), write(' '),write(LCPerm), write(' with recharges at '),write(LCharging),nl)
  ;true).
  
