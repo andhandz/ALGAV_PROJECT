@@ -349,7 +349,7 @@ delivery(4438, 20221205, 150, 9, 7, 9).
 delivery(4445, 20221205, 100, 3, 5, 7).
 delivery(4443, 20221205, 120, 8, 6, 8).
 delivery(4449, 20221205, 300, 11, 15, 20).
-delivery(4398, 20221205, 310, 17, 16, 20).
+/*delivery(4398, 20221205, 310, 17, 16, 20).
 delivery(4432, 20221205, 270, 14, 14, 18).
 delivery(4437, 20221205, 180, 12, 9, 11).
 delivery(4451, 20221205, 220, 6, 9, 12).
@@ -359,7 +359,7 @@ delivery(4455, 20221205, 280, 7, 14, 19).
 delivery(4399, 20221205, 260, 15, 13, 18).
 delivery(4454, 20221205, 350, 10, 18, 22).
 delivery(4446, 20221205, 260, 4, 14, 17).
-delivery(4456, 20221205, 330, 16, 17, 21).
+delivery(4456, 20221205, 330, 16, 17, 21).*/
 
 truck(eTruck01).
 truck(eTruck02).
@@ -741,11 +741,14 @@ update_2(LCPerm,Time,LCharging):-
  
  /* Heuristics*/
  
-distance_heuristic(Time,LCharging):-
+/* Distance Heuristic*/
+ 
+distance_heuristic(Time,LCharging,FL):-
  findall(City,delivery(_,_,_,City,_,_),LC),
  factory(SP),
  distance_queue(LC,LC,NL,_,_),
  reverse(NL,NL1),
+ FL = NL1,
  sum_weights(NL1,LW,_),
  characteristicsTruck(eTruck01,Tare,_,Energy,_,_),
  add_TruckWeight(Tare,LW,LWT),
@@ -764,5 +767,28 @@ find_the_closet(C1,[C],V,C):- dist(C1,Va,C), V is Va,!.
 find_the_closet(C1,[CC|LC],V,C):- 
  dist(C1,Val,CC), find_the_closet(C1,LC,V1,C2), ((Val<V1, C is CC, V is Val); (C is C2, V is V1)),!.
  
+ /* Weight Heuristic*/
  
+weight_heuristic(Time,LCharging,FL):-
+ findall(City,delivery(_,_,_,City,_,_),LC),
+ factory(SP),
+ weight_queue(LC,LC,NL,_),
+ sum_weights(NL,LW,_),
+ FL = NL,
+ characteristicsTruck(eTruck01,Tare,_,Energy,_,_),
+ add_TruckWeight(Tare,LW,LWT),
+ append([SP|NL],[SP],LComplete),
+ cost_2(LComplete, LWT, Energy, Time, LCharging),!. 
+
+ 
+weight_queue([_],LC,[C1],NLC):- find_the_lightest(LC,C2,_),C1 is C2, list_delete(C1,LC,NLC1), NLC = NLC1, !.
+weight_queue([_|LC],LC1,[C|FL],NLC):-
+ weight_queue(LC,LC1,FL,NLC1), find_the_lightest(NLC1,C1,_), C is C1,list_delete(C,NLC1,NLC2), NLC = NLC2,!.
+ 
+find_the_lightest([],_,1000000):-!.
+find_the_lightest([H|LC],C,V):- find_the_lightest(LC,C1,V1), delivery(_,_,W,H,_,_),((W<V1, C is H, V is W);(C is C1, V is V1)), !.
+
+
+
+
  
