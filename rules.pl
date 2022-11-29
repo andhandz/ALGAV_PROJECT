@@ -349,7 +349,7 @@ delivery(4438, 20221205, 150, 9, 7, 9).
 delivery(4445, 20221205, 100, 3, 5, 7).
 delivery(4443, 20221205, 120, 8, 6, 8).
 delivery(4449, 20221205, 300, 11, 15, 20).
-/*delivery(4398, 20221205, 310, 17, 16, 20).
+delivery(4398, 20221205, 310, 17, 16, 20).
 delivery(4432, 20221205, 270, 14, 14, 18).
 delivery(4437, 20221205, 180, 12, 9, 11).
 delivery(4451, 20221205, 220, 6, 9, 12).
@@ -359,7 +359,7 @@ delivery(4455, 20221205, 280, 7, 14, 19).
 delivery(4399, 20221205, 260, 15, 13, 18).
 delivery(4454, 20221205, 350, 10, 18, 22).
 delivery(4446, 20221205, 260, 4, 14, 17).
-delivery(4456, 20221205, 330, 16, 17, 21).*/ 
+delivery(4456, 20221205, 330, 16, 17, 21).
 
 truck(eTruck01).
 truck(eTruck02).
@@ -737,4 +737,32 @@ update_2(LCPerm,Time,LCharging):-
  ((Time<MinTime,!, retract(minTime(_,_,_)), assertz(minTime(LCPerm,LCharging,Time)),
  write('Time='),write(Time), write(' '),write(LCPerm), write(' with recharges at '),write(LCharging),nl)
  ;true).
+ 
+ 
+ /* Heuristics*/
+ 
+distance_heuristic(Time,LCharging):-
+ findall(City,delivery(_,_,_,City,_,_),LC),
+ factory(SP),
+ distance_queue(LC,LC,NL,_,_),
+ reverse(NL,NL1),
+ sum_weights(NL1,LW,_),
+ characteristicsTruck(eTruck01,Tare,_,Energy,_,_),
+ add_TruckWeight(Tare,LW,LWT),
+ append([SP|NL1],[SP],LComplete),
+ cost_2(LComplete, LWT, Energy, Time, LCharging),!.
+
+distance_queue(LC,[_],[C], NLC, V):- factory(SP), find_the_closet(SP,LC,_,C1), C is C1, list_delete(C,LC,LC1), NLC = LC1, V is C, !.
+distance_queue(LC,[_|LC1],[C2|LC2], NLC, V):-distance_queue(LC,LC1,LC2,NLC1,V1), find_the_closet(V1,NLC1,_,NC), C2 is NC, list_delete(NC,NLC1,LC3), NLC = LC3, V is NC.
+
+list_delete(_,[],[]):-!.
+list_delete(Elem,[Elem|T],T):-!.
+list_delete(Elem,[H|T],[H|U]):-list_delete(Elem,T,U).
+
+
+find_the_closet(C1,[C],V,C):- dist(C1,Va,C), V is Va,!.
+find_the_closet(C1,[CC|LC],V,C):- 
+ dist(C1,Val,CC), find_the_closet(C1,LC,V1,C2), ((Val<V1, C is CC, V is Val); (C is C2, V is V1)),!.
+ 
+ 
  
