@@ -349,7 +349,7 @@ delivery(4438, 20221205, 150, 9, 7, 9).
 delivery(4445, 20221205, 100, 3, 5, 7).
 delivery(4443, 20221205, 120, 8, 6, 8).
 delivery(4449, 20221205, 300, 11, 15, 20).
-/*delivery(4398, 20221205, 310, 17, 16, 20).
+delivery(4398, 20221205, 310, 17, 16, 20).
 delivery(4432, 20221205, 270, 14, 14, 18).
 delivery(4437, 20221205, 180, 12, 9, 11).
 delivery(4451, 20221205, 220, 6, 9, 12).
@@ -359,7 +359,7 @@ delivery(4455, 20221205, 280, 7, 14, 19).
 delivery(4399, 20221205, 260, 15, 13, 18).
 delivery(4454, 20221205, 350, 10, 18, 22).
 delivery(4446, 20221205, 260, 4, 14, 17).
-delivery(4456, 20221205, 330, 16, 17, 21).*/
+delivery(4456, 20221205, 330, 16, 17, 21).
 
 truck(eTruck01).
 truck(eTruck02).
@@ -744,6 +744,7 @@ update_2(LCPerm,Time,LCharging):-
 /* Distance Heuristic*/
  
 distance_heuristic(Time,LCharging,FL):-
+ get_time(Ti),
  findall(City,delivery(_,_,_,City,_,_),LC),
  factory(SP),
  distance_queue(LC,LC,NL,_,_),
@@ -753,7 +754,8 @@ distance_heuristic(Time,LCharging,FL):-
  characteristicsTruck(eTruck01,Tare,_,Energy,_,_),
  add_TruckWeight(Tare,LW,LWT),
  append([SP|NL1],[SP],LComplete),
- cost_2(LComplete, LWT, Energy, Time, LCharging),!.
+ cost_2(LComplete, LWT, Energy, Time, LCharging),!, get_time(Tf),
+ T is Tf-Ti, write("Time to generate solution is "), write(T), write("sec").
 
 distance_queue(LC,[_],[C], NLC, V):- factory(SP), find_the_closet(SP,LC,_,C1), C is C1, list_delete(C,LC,LC1), NLC = LC1, V is C, !.
 distance_queue(LC,[_|LC1],[C2|LC2], NLC, V):-distance_queue(LC,LC1,LC2,NLC1,V1), find_the_closet(V1,NLC1,_,NC), C2 is NC, list_delete(NC,NLC1,LC3), NLC = LC3, V is NC.
@@ -770,6 +772,7 @@ find_the_closet(C1,[CC|LC],V,C):-
  /* Weight Heuristic*/
  
 weight_heuristic(Time,LCharging,FL):-
+ get_time(Ti),
  findall(City,delivery(_,_,_,City,_,_),LC),
  factory(SP),
  weight_queue(LC,LC,NL,_),
@@ -778,7 +781,8 @@ weight_heuristic(Time,LCharging,FL):-
  characteristicsTruck(eTruck01,Tare,_,Energy,_,_),
  add_TruckWeight(Tare,LW,LWT),
  append([SP|NL],[SP],LComplete),
- cost_2(LComplete, LWT, Energy, Time, LCharging),!. 
+ cost_2(LComplete, LWT, Energy, Time, LCharging),!, get_time(Tf),
+ T is Tf-Ti, write("Time to generate solution is "), write(T), write("sec"). 
 
  
 weight_queue([_],LC,[C1],NLC):- find_the_lightest(LC,C2,_),C1 is C2, list_delete(C1,LC,NLC1), NLC = NLC1, !.
@@ -791,6 +795,7 @@ find_the_lightest([H|LC],C,V):- find_the_lightest(LC,C1,V1), delivery(_,_,W,H,_,
 /* Combine Heuristic*/
 
 combine_heuristic(Time,LCharging,FL):-
+ get_time(Ti),
  findall(City,delivery(_,_,_,City,_,_),LC),
  factory(SP),
  combine_queue(LC,LC,NL,_,_),
@@ -800,7 +805,8 @@ combine_heuristic(Time,LCharging,FL):-
  characteristicsTruck(eTruck01,Tare,_,Energy,_,_),
  add_TruckWeight(Tare,LW,LWT),
  append([SP|NL1],[SP],LComplete),
- cost_2(LComplete, LWT, Energy, Time, LCharging),!.
+ cost_2(LComplete, LWT, Energy, Time, LCharging),!, get_time(Tf),
+ T is Tf-Ti, write("Time to generate solution is "), write(T), write("sec").
 
 combine_queue(LC,[_],[C], NLC, V):- factory(SP), find_the_lowest(SP,LC,_,C1), C is C1, list_delete(C,LC,LC1), NLC = LC1, V is C, !.
 combine_queue(LC,[_|LC1],[C2|LC2], NLC, V):-combine_queue(LC,LC1,LC2,NLC1,V1), find_the_lowest(V1,NLC1,_,NC), C2 is NC, list_delete(NC,NLC1,LC3), NLC = LC3, V is NC.
