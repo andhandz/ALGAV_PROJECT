@@ -788,7 +788,28 @@ weight_queue([_|LC],LC1,[C|FL],NLC):-
 find_the_lightest([],_,1000000):-!.
 find_the_lightest([H|LC],C,V):- find_the_lightest(LC,C1,V1), delivery(_,_,W,H,_,_),((W<V1, C is H, V is W);(C is C1, V is V1)), !.
 
+/* Combine Heuristic*/
 
+combine_heuristic(Time,LCharging,FL):-
+ findall(City,delivery(_,_,_,City,_,_),LC),
+ factory(SP),
+ combine_queue(LC,LC,NL,_,_),
+ reverse(NL,NL1),
+ sum_weights(NL1,LW,_),
+ FL = NL1,
+ characteristicsTruck(eTruck01,Tare,_,Energy,_,_),
+ add_TruckWeight(Tare,LW,LWT),
+ append([SP|NL1],[SP],LComplete),
+ cost_2(LComplete, LWT, Energy, Time, LCharging),!.
+
+combine_queue(LC,[_],[C], NLC, V):- factory(SP), find_the_lowest(SP,LC,_,C1), C is C1, list_delete(C,LC,LC1), NLC = LC1, V is C, !.
+combine_queue(LC,[_|LC1],[C2|LC2], NLC, V):-combine_queue(LC,LC1,LC2,NLC1,V1), find_the_lowest(V1,NLC1,_,NC), C2 is NC, list_delete(NC,NLC1,LC3), NLC = LC3, V is NC.
+
+find_the_lowest(C1,[C],V,C):- calculate_combine_cost(C1,C,Val), V is Val,!.
+find_the_lowest(C1,[CC|LC],V,C):-
+ calculate_combine_cost(C1,CC,Val), find_the_lowest(C1,LC,V1,C2), ((Val<V1, C is CC, V is Val); (C is C2, V is V1)),!.
+ 
+calculate_combine_cost(C1,C2,V):- dist(C1,D,C2), delivery(_,_,W,C2,_,_), V is D/W,!. 	
 
 
  
