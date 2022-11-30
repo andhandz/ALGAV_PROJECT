@@ -1,20 +1,3 @@
-city('Arouca').
-city('Espinho').
-city('Gondomar').
-city('Maia').
-city('Matosinhos').
-city('Oliveira de Azemeis').
-city('Paredes').
-city('Porto').
-city('Povoa de Varzim').
-city('Santa Maria da Feira').
-city('Santo Tirso').
-city('Sao Joao da Madeira').
-city('Trofa').
-city('Vale de Cambra').
-city('Valongo').
-city('Vila do Conde').
-city('Vila Nova de Gaia').
 
 idStore('Arouca', 1).
 idStore('Espinho', 2).
