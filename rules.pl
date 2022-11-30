@@ -1,3 +1,20 @@
+city('Arouca').
+city('Espinho').
+city('Gondomar').
+city('Maia').
+city('Matosinhos').
+city('Oliveira de Azemeis').
+city('Paredes').
+city('Porto').
+city('Povoa de Varzim').
+city('Santa Maria da Feira').
+city('Santo Tirso').
+city('Sao Joao da Madeira').
+city('Trofa').
+city('Vale de Cambra').
+city('Valongo').
+city('Vila do Conde').
+city('Vila Nova de Gaia').
 
 idStore('Arouca', 1).
 idStore('Espinho', 2).
@@ -698,13 +715,15 @@ calculate_cost_2(LS,Time,LCharging):-
 cost_2([_],_,_,0,[]).
 cost_2([S1,S2|LS], [WT|LWT], CEnergy, Time, LCharging):-
 pathData(_,S1,S2,T,En,Ex_T),characteristicsTruck(eTruck01,Ta,ML,E,_,TCharge),NEn is En*WT/(Ta+ML), 
- ((CEnergy-NEn<E*2/10,!, ((S2 is 5, TCharge1 is (max(0,NEn+2/10*E-CEnergy))*TCharge/(6/10*E)); (TCharge1 is (E*8/10-CEnergy)*TCharge/(6/10*E))), E1 is max(2/10*E, 8/10*E- NEn), LCharging = [S1|LPreviousCharges]);
+ ((CEnergy-NEn<E*2/10,!, ((S2 is 5, TCharge1 is (max(0,NEn+2/10*E-CEnergy))*TCharge/(6/10*E)); (TCharge1 is (E*8/10-CEnergy)*TCharge/(6/10*E))),
+ E1 is max(2/10*E, 8/10*E- NEn), LCharging = [S1|LPreviousCharges]);
  (TCharge1 is 0, E1 is CEnergy-NEn, LCharging = LPreviousCharges)),
  cost_2([S2|LS],LWT,E1,Time1,LPreviousCharges), ((S1 is 5, Ex1_T is 0, RT is 0);(delivery(_,_,_,S1,_,RT), Ex1_T is Ex_T)),
  Time is max(TCharge1,RT)+T*WT/(Ta+ML)+Time1+Ex1_T.
  
  
-min_time_seq(LC,LCharging,Time):- get_time(Ti), (run_2;true),minTime(LC,LCharging,Time), get_time(Tf), T is Tf-Ti, write("Time to generate solution is "), write(T), write("sec").
+min_time_seq(LC,LCharging,Time):- get_time(Ti), (run_2;true),minTime(LC,LCharging,Time), get_time(Tf), T is Tf-Ti,
+write("Time to generate solution is "), write(T), write("sec").
  
 run_2:-
  retractall(minTime(_,_,_)),
@@ -741,7 +760,8 @@ distance_heuristic(Time,LCharging,FL):-
  T is Tf-Ti, write("Time to generate solution is "), write(T), write("sec").
 
 distance_queue(LC,[_],[C], NLC, V):- factory(SP), find_the_closet(SP,LC,_,C1), C is C1, list_delete(C,LC,LC1), NLC = LC1, V is C, !.
-distance_queue(LC,[_|LC1],[C2|LC2], NLC, V):-distance_queue(LC,LC1,LC2,NLC1,V1), find_the_closet(V1,NLC1,_,NC), C2 is NC, list_delete(NC,NLC1,LC3), NLC = LC3, V is NC.
+distance_queue(LC,[_|LC1],[C2|LC2], NLC, V):-distance_queue(LC,LC1,LC2,NLC1,V1), find_the_closet(V1,NLC1,_,NC), C2 is NC, list_delete(NC,NLC1,LC3),
+NLC = LC3, V is NC.
 
 list_delete(_,[],[]):-!.
 list_delete(Elem,[Elem|T],T):-!.
@@ -792,7 +812,8 @@ combine_heuristic(Time,LCharging,FL):-
  T is Tf-Ti, write("Time to generate solution is "), write(T), write("sec").
 
 combine_queue(LC,[_],[C], NLC, V):- factory(SP), find_the_lowest(SP,LC,_,C1), C is C1, list_delete(C,LC,LC1), NLC = LC1, V is C, !.
-combine_queue(LC,[_|LC1],[C2|LC2], NLC, V):-combine_queue(LC,LC1,LC2,NLC1,V1), find_the_lowest(V1,NLC1,_,NC), C2 is NC, list_delete(NC,NLC1,LC3), NLC = LC3, V is NC.
+combine_queue(LC,[_|LC1],[C2|LC2], NLC, V):-combine_queue(LC,LC1,LC2,NLC1,V1), find_the_lowest(V1,NLC1,_,NC),
+C2 is NC, list_delete(NC,NLC1,LC3), NLC = LC3, V is NC.
 
 find_the_lowest(C1,[C],V,C):- calculate_combine_cost(C1,C,Val), V is Val,!.
 find_the_lowest(C1,[CC|LC],V,C):-
