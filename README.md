@@ -150,13 +150,159 @@ RT - time for received delivery in "S1"
 **Function "min_time_seq" is almost the same like the "seq_cost_min". Now we have also list of the cities when battery was charged, calculation including energy, and time measurement by "get_time", which will be useful for next task**  
 ![](/images/img_to_task_B/final_min_cost.png?raw=true)    
 <br> 
- # STUDY OF THE PROBLEM COMPLEXITY AS WELL AS THE VIABILITY OF FINDING THE OPTIMAL SOLUTION BY GENERATING ALL THE SOLUTIONS
+ # STUDY OF THE PROBLEM COMPLEXITY AS WELL AS THE VIABILITY OF FINDING THE OPTIMAL SOLUTION BY GENERATING ALL THE SOLUTIONS  
+*We prepared table which analyzes complexity and viability of TSP solution broadening problem:*  
+<br>
 ![](/images/img_to_task_C/Table_of_solution_times.png?raw=true)  
+<br>
+*Like we can see, for number of warehouses 8 or less, the solution is almost immediate, for 9/10 we have to wait accordingly 10 sec and 2min but obviously it's still worthy. Next step needs around 25min so this is the moment when we're starting thinking is it the best solution. But in our opinion yes, beacuse it would be really tough to find heuristic with result time closer than 25min to best permutation, so it's still some time gain. For 12 warehouses time to find optimal solution is around 5 hours. I think everyone can agree that it's too long and also we could have some troubles with stack limit*   
   
-# HEURISTICS FOT THE QUICK GENERATION OF SOLUTIONS
+# HEURISTICS FOT THE QUICK GENERATION OF SOLUTIONS  
+*Like we saw earlier, TSP is working good but only for a small data and we need optimal solution for large data too. To solve this problem, we can use a couple of the heuristics and find the best. We're gonna present 3 ideas:*  
+**Distance heuristic** - The goal is to choose always the city of the remaining with the shortest distance:  
 ![](/images/img_to_task_D/distance_heuristic.png?raw=true)  
+**Meaning of functions:**  
+distance_heuristic(Time, List of charging, Final List) - Our main function which return us final time using this idea, list of cities where battery was charged, list with sequence of cities using this idea  
+distance_queue(List of cities, List of cities, Result List, Modified List, Last Value) - function which for list of citites returns reverse sequence of cities to distance heuristic  
+list_delete(Element, List of cities, New list of cities) - function which return list from 2 param without param 1  
+find_the_closet(City 1, List of cities, Lower distance, The closet city) - function which return from list of cities this one, which is the closet to param 1  
+**Meaning of variables:**  
+Time - final time  
+LCharging - list of cities, where the battery was charged  
+FL - sequence for our solution  
+Ti - initial time  
+City - index of city which participate in any of considering deliveries  
+LC - list of all "City"  
+SP - index of the city, where is our factory  
+NL - reverse sequence of the cities to solution  
+NL1 - sequence of the cities to solution  
+LW - list of deliveries's weight to every next stop  
+Tare - truck's weight  
+Energy - truck's battery energy  
+LWT - list of the final truck's weight for every stop  
+LComplete - list of cities including factory  
+Tf - time of the finish  
+T - solution's time  
+<br>
+C - city closet to factory  
+NLC - list of cities w/o "C"  
+V - city which was added to sequence in current step  
+LC1 - list of cities w/o one more (the second param is just equivalent of the counter)  
+C2 - the closet city in current step  
+LC2 - list of sequence made in earlier steps  
+NLC1 - list of cities which left to add to our sequence  
+V1 - city for which we're finding the closet one i current step  
+NC - the closet city to "V1"  
+LC3 - "NLC1" w/o "NC"  
+<br>
+Elem - element to delete  
+T - the tail of the list when "Elem" is a head  
+H - head of the list when it isnt "Elem"  
+U - tail of the new list when "Elem" isn't head  
+<br>
+C1 - index of the city for which we're searching the closet one  
+C - current closet city   
+V - value of the distance with current closet city  
+Va - distance between "C1" and "C"  
+CC - current considering city if there's left more than 1  
+LC - list of citites w/o "CC"  
+Val - distance between "C1" and "CC"  
+V1 - value of the distance with closet city before current one  
+C2 - closet city before current one  
+<br>
+**Weight heuristic** - The goal is to choose always the city of the remaining with the heaviest delivery:  
 ![](/images/img_to_task_D/weight_heuristic.png?raw=true)  
+**Meaning of functions:**  
+weight_heuristic(Time, List of charging, Final List) - Our main function which return us final time using this idea, list of cities where battery was charged, list with sequence of cities using this idea  
+weight_queue(List of cities, List of cities, Result List, Modified List) - function which for list of cities returns sequence of cities to weight heuristic  
+find_the_lightest(List of cities, "Lightest" city, The lighter weight value) - function which return from list of cities this one, which have the lightest weight of the delivery  
+**Meaning of variables:**  
+Time - final time  
+LCharging - list of cities, where the battery was charged  
+FL - sequence for our solution  
+Ti - initial time  
+City - index of city which participate in any of considering deliveries  
+LC - list of all "City"  
+SP - index of the city, where is our factory  
+NL - sequence of the cities to solution  
+LW - list of deliveries's weight to every next stop  
+Tare - truck's weight  
+Energy - truck's battery energy  
+LWT - list of the final truck's weight for every stop  
+LComplete - list of cities including factory  
+Tf - time of the finish  
+T - solution's time  
+<br>
+C1/C2 - the lightest city from all  
+C/C1 - the lightest city from remaining  
+NLC - list of cities w/o "C" or "C1"   
+LC1 - list of all cities  
+FL - list of final sequence made before current step  
+NLC1 - list of cities which left to add to our sequence  
+LC3 - "NLC1" w/o "C1"  
+<br>
+C - current "lightest" city   
+V - value of the weight "C"'s delivery  
+H - current considering city   
+LC - list of citites w/o "H"  
+W - weight of "C" delivery  
+V1 - value of the lightest delivery before current one  
+C1 - "lightest" city before current one  
+<br>
+**Combine heuristic** - The goal is to choose always the city of the remaining with the best combine of distance and weight value, we're calculating dividing distance by weight and the lowest value is the best:  
 ![](/images/img_to_task_D/combine_heuristic.png?raw=true)  
-# ANALYSIS OF THE HEURISTICS QUALITY
+**Meaning of functions:**  
+combine_heuristic(Time, List of charging, Final List) - Our main function which return us final time using this idea, list of cities where battery was charged, list with sequence of cities using this idea  
+combine_queue(List of cities, List of cities, Result List, Modified List, Last Value) - function which for list of citites returns reverse sequence of cities to combine heuristic  
+find_the_lowest(City 1, List of cities, Lower value, The best city) - function which return from list of cities this one, which have the best combine's value to param 1  
+calculate_combine_cost(City 1, City 2, Value) - function which calculate for 2 inputs cities their combine value  
+**Meaning of variables:**  
+Time - final time  
+LCharging - list of cities, where the battery was charged  
+FL - sequence for our solution  
+Ti - initial time  
+City - index of city which participate in any of considering deliveries  
+LC - list of all "City"  
+SP - index of the city, where is our factory  
+NL - reverse sequence of the cities to solution  
+NL1 - sequence of the cities to solution  
+LW - list of deliveries's weight to every next stop  
+Tare - truck's weight  
+Energy - truck's battery energy  
+LWT - list of the final truck's weight for every stop  
+LComplete - list of cities including factory  
+Tf - time of the finish  
+T - solution's time  
+<br>
+C - city with the best combine value to factory  
+NLC - list of cities w/o "C"  
+V - city which was added to sequence in current step  
+LC1 - list of cities w/o one more (the second param is just equivalent of the counter)  
+C2 -  city with the best combine value in current step  
+LC2 - list of sequence made in earlier steps  
+NLC1 - list of cities which left to add to our sequence  
+V1 - city for which we're finding city with the best combine value in current step  
+NC - city with the best combine value to "V1"  
+LC3 - "NLC1" w/o "NC"  
+<br>
+C1 - index of the city for which we're searching the best one  
+C - current best city   
+V - combine value with current best city  
+Va - combine value between "C1" and "C"  
+CC - current considering city if there's left more than 1  
+LC - list of citites w/o "CC"  
+Val - combine value "C1" and "CC"  
+V1 - combine value with best city before current one  
+C2 - best city before current one  
+<br>
+C1 - initial City  
+C2 - final City  
+V - combine value between "C1" and "C2"  
+D - distance between "C1" and "C2"  
+W - weight of delivery to "C2"  
+# ANALYSIS OF THE HEURISTICS QUALITY  
+**To compare heuristics, find the best one and judge when they're better than TSP we prepared this table:**  
 ![](/images/img_to_task_D/comparing_of_heuristics_table.png?raw=true)    
+*For 12 warehouses we chase The Combined Heuristic just because spend 5 hours for TSP solution is too much in our opinion. We can notice Weight Heuristic wasn't the best idea, there's a huge differnce between this one and other heuristics. The rest two heuristics are quite close to best time and we can also see the more of warehouses, there are closer to optimal value, thus we think for large data these two would be almost like a optimal, especially combine. Because combine heuristic gives the impression being better than distance along with the increase of the warehouses*  
 # CONCLUSIONS
+**We can learn from this task, that it isn't always possible to invent algorithm, which will find best solutions of all possibilites with human time and w/o torturing our computer. When we're talking about NP-Problems even 12 elements could be too much. In that case we need to go for the compromise and decline for the most acurate solution to find some other a lot of faster. In such a case, heurestics come to the rescue. We could notice that relevant choose of heuristics is really important. Like in our example, if our company used the combine or distances heuristics, we would work very efficiently. But if we used the weight heuristic, we probably would go bankrupt after one month... In our opinion it's great idea to comapre a lot of heuristics and choose the best one**    
