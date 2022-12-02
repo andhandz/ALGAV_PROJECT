@@ -21,3 +21,30 @@
 
 ![](/diagrams_UC/UC4.svg?raw=true)  
 </p>  
+
+# DOMAIN KNOWLEDGE REPRESENTATION
+![](/images/img_to_task_A/cities.png?raw=true)  
+![](/images/img_to_task_A/distances.png?raw=true)  
+![](/images/img_to_task_A/pathData.png?raw=true)  
+![](/images/img_to_task_A/trucks.png?raw=true)  
+![](/images/img_to_task_A/delivieries.png?raw=true)  
+![](/images/img_to_task_A/factory.png?raw=true)    
+  
+# OPTIMAL SOLUTION FOR DELIVERIES PLANNING WITH AN ELECTRICAL TRUCK
+![](/images/img_to_task_B/sum_weights.png?raw=true)  
+![](/images/img_to_task_B/add_truckWeight.png?raw=true)  
+![](/images/img_to_task_B/calculate_cost.png?raw=true)  
+![](/images/img_to_task_B/seq_cost_min.png?raw=true)  
+![](/images/img_to_task_B/calculate_cost2.png?raw=true)  
+![](/images/img_to_task_B/final_min_cost.png?raw=true)    
+  
+ # STUDY OF THE PROBLEM COMPLEXITY AS WELL AS THE VIABILITY OF FINDING THE OPTIMAL SOLUTION BY GENERATING ALL THE SOLUTIONS
+![](/images/img_to_task_C/Table_of_solution_times.png?raw=true)  
+  
+# HEURISTICS FOT THE QUICK GENERATION OF SOLUTIONS
+![](/images/img_to_task_D/distance_heuristic.png?raw=true)  
+![](/images/img_to_task_D/weight_heuristic.png?raw=true)  
+![](/images/img_to_task_D/combine_heuristic.png?raw=true)  
+# ANALYSIS OF THE HEURISTICS QUALITY
+![](/images/img_to_task_D/comparing_of_heuristics_table.png?raw=true)    
+# CONCLUSIONS
