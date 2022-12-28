@@ -792,7 +792,7 @@ combine_heuristic(Time,LCharging,FL):-
  add_TruckWeight(Tare,LW,LWT),
  append([SP|NL1],[SP],LComplete),
  cost_2(LComplete, LWT, Energy, Time, LCharging),!, get_time(Tf),
- T is Tf-Ti, write("Time to generate solution is "), write(T), write("sec").
+ T is Tf-Ti.
 
 combine_queue(LC,[_],[C], NLC, V):- factory(SP), find_the_lowest(SP,LC,_,C1), C is C1, list_delete(C,LC,LC1), NLC = LC1, V is C, !.
 combine_queue(LC,[_|LC1],[C2|LC2], NLC, V):-combine_queue(LC,LC1,LC2,NLC1,V1), find_the_lowest(V1,NLC1,_,NC),
@@ -812,9 +812,9 @@ calculate_combine_cost(C1,C2,V):- dist(C1,D,C2), delivery(_,_,W,C2,_,_), V is D/
 % task(Id,Length,Deadline,Penalty).
 task(t1,2,5,1).
 task(t2,4,7,6).
-task(t3,1,11,2).
-task(t4,3,9,3).
-task(t5,3,8,2).
+task(t7,1,11,2).
+task(t8,3,9,3).
+task(t9,3,8,2).
 
 % tasks(NTasks).
 tasks(5).
@@ -843,29 +843,34 @@ generate:-
 	generate_generation(0,NG,PopOrd).
 
 generate_population(Pop):-
-	population(TamPop),
-	tasks(NumT),
-	findall(Task,task(Task,_,_,_),LTasks),
-	generate_population(TamPop,LTasks,NumT,Pop).
+	population(CurPop),
+ 	findall(City,delivery(_,_,_,City,_,_),LC),
+ 	length(LC,Len),
+	generate_population(CurPop,LC,Len,Pop).
 
 generate_population(0,_,_,[]):-!.
 
-generate_population(TamPop,LTasks,NumT,[Ind|Rest]):-
-	TamPop1 is TamPop-1,
-	generate_population(TamPop1,LTasks,NumT,Rest),
-	generate_individual(LTasks,NumT,Ind),
+generate_population(CurPop,LC,Len,[Ind|Rest]):- combine_heuristic(_,_,Ind), CurPop1 is CurPop - 1, population(Pop), CurPop is Pop, generate_population(CurPop1,LC,Len,Rest).
+
+generate_population(CurPop,LC,Len,[Ind|Rest]):-
+	CurPop1 is CurPop-1,
+	generate_population(CurPop1,LC,Len,Rest),
+	generate_individual(LC,Len,Ind),
 	not(member(Ind,Rest)).
-generate_population(TamPop,LTasks,NumT,L):-
-	generate_population(TamPop,LTasks,NumT,L).
+generate_population(CurPop,LC,Len,L):-
+	generate_population(CurPop,LC,Len,L).
 
 generate_individual([G],1,[G]):-!.
 
-generate_individual(LTasks,NumT,[G|Rest]):-
-	NumTemp is NumT + 1, % To use with random
-	random(1,NumTemp,N),
-	remove(N,LTasks,G,NewL),
-	NumT1 is NumT-1,
-	generate_individual(NewL,NumT1,Rest).
+generate_individual(LC,Len,[G|Rest]):-
+	Lenemp is Len + 1, % To use with random
+	random(1,Lenemp,N),
+	remove(N,LC,G,NewL),
+	Len1 is Len-1,
+	generate_individual(NewL,Len1,Rest).
+
+choose_the_best([A],A,T):- calculate_cost_2(A,Ti,_), T is Ti,!.
+choose_the_best([H|T],O,Ti):- choose_the_best(T,O1,T1), calculate_cost_2(H,Tim,_), ((Tim<T1, O = H, Ti is Tim); (O = O1, Ti is T1)),!. 
 
 remove(1,[G|Rest],G,Rest).
 remove(N,[G1|Rest],G,[G1|Rest1]):-
@@ -874,23 +879,9 @@ remove(N,[G1|Rest],G,[G1|Rest1]):-
 
 evaluate_population([],[]).
 evaluate_population([Ind|Rest],[Ind*V|Rest1]):-
-	evaluate(Ind,V),
+	calculate_cost_2(Ind,V,_),
 	evaluate_population(Rest,Rest1).
 
-evaluate(Seq,V):-
-	evaluate(Seq,0,V).
-
-evaluate([],_,0).
-evaluate([T|Rest],Inst,V):-
-	task(T,Dur,Deadline,Pen),
-	InstSum is Inst+Dur,
-	evaluate(Rest,InstSum,VRest),
-	(
-		(InstSum =< Deadline,!, VT is 0)
-  ;
-		(VT is (InstSum-Deadline)*Pen)
-	),
-	V is VT+VRest.
 
 order_population(PopEv,PopEvOrd):-
 	bsort(PopEv,PopEvOrd).
@@ -918,15 +909,23 @@ generate_generation(N,G,Pop):-
 	cross(Pop,NPop1),
 	mutation(NPop1,NPop),
 	evaluate_population(NPop,NPopEv),
-	order_population(NPopEv,NPopOrd),
+	population(Num),
+	order_population(NPopEv,NPopEvOr),
+	(remove(Num,NPopEvOr,_,NPopEv1),
+	give_head(Pop,H), not(member(H,NPopEv)),
+	NPopEv2 = [H|NPopEv1],
+	order_population(NPopEv2,NPopOrd)),
 	N1 is N+1,
 	generate_generation(N1,G,NPopOrd).
+
+give_head([H|_],H):-!.
 
 generate_points_cross(P1,P2):-
 	generate_points_cross1(P1,P2).
 
 generate_points_cross1(P1,P2):-
-	tasks(N),
+ 	findall(City,delivery(_,_,_,City,_,_),LC),
+ 	length(LC,N),
 	NTemp is N+1,
 	random(1,NTemp,P11),
 	random(1,NTemp,P21),
@@ -974,7 +973,8 @@ sublist1([_|R1],N1,N2,[h|R2]):-
 	sublist1(R1,N3,N4,R2).
 
 rotate_right(L,K,L1):-
-	tasks(N),
+	findall(City,delivery(_,_,_,City,_,_),LC),
+ 	length(LC,N),
 	T is N - K,
 	rr(T,L,L1).
 
@@ -997,7 +997,8 @@ eliminate([_|R1],L,R2):-
 
 insert([],L,_,L):-!.
 insert([X|R],L,N,L2):-
-	tasks(T),
+ 	findall(City,delivery(_,_,_,City,_,_),LC),
+ 	length(LC,T),
 	((N>T,!,N1 is N mod T);N1 = N),
 	insert1(X,N1,L,L1),
 	N2 is N + 1,
@@ -1011,8 +1012,9 @@ insert1(X,N,[Y|L],[Y|L1]):-
 
 crs(Ind1,Ind2,P1,P2,NInd11):-
 	sublist(Ind1,P1,P2,Sub1),
-	tasks(NumT),
-	R is NumT-P2,
+ 	findall(City,delivery(_,_,_,City,_,_),LC),
+ 	length(LC,Len),
+	R is Len-P2,
 	rotate_right(Ind2,R,Ind21),
 	eliminate(Ind21,Sub1,Sub2),
 	P3 is P2 + 1,
