@@ -869,8 +869,6 @@ generate_individual(LC,Len,[G|Rest]):-
 	Len1 is Len-1,
 	generate_individual(NewL,Len1,Rest).
 
-choose_the_best([A],A,T):- calculate_cost_2(A,Ti,_), T is Ti,!.
-choose_the_best([H|T],O,Ti):- choose_the_best(T,O1,T1), calculate_cost_2(H,Tim,_), ((Tim<T1, O = H, Ti is Tim); (O = O1, Ti is T1)),!. 
 
 remove(1,[G|Rest],G,Rest).
 remove(N,[G1|Rest],G,[G1|Rest1]):-
@@ -904,21 +902,36 @@ bexchange([X|L1],[X|L2]):-bexchange(L1,L2).
 generate_generation(G,G,Pop):-!,
 	write('Generate'), write(G), write(':'), nl, write(Pop), nl.
 
+generate_generation(-1,G,Pop):-!,
+	write('Generate'), write(G), write(':'), nl, write(Pop), nl, write('Exit condition achived').
+
+
 generate_generation(N,G,Pop):-
-	write('Generate '), write(N), write(':'), nl, write(Pop), nl,
-	cross(Pop,NPop1),
+	combine_heuristic(T,_,_),
+	give_head(Pop,H),
+	del_ev(H,NH),
+	calculate_cost_2(NH,V,_),
+	((V+100<T, N1 is -1, NPopOrd = Pop, G1 is N, !);
+	(mix_list(Pop,MPop), cross(MPop,NPop1),
 	mutation(NPop1,NPop),
 	evaluate_population(NPop,NPopEv),
-	population(Num),
+	population(Num), Num1 is Num + 1,
 	order_population(NPopEv,NPopEvOr),
-	(remove(Num,NPopEvOr,_,NPopEv1),
-	give_head(Pop,H), not(member(H,NPopEv)),
+	random(1,Num1,Id),
+	remove(Id,NPopEvOr,_,NPopEv1),
+	not(member(H,NPopEv)),
 	NPopEv2 = [H|NPopEv1],
-	order_population(NPopEv2,NPopOrd)),
+	order_population(NPopEv2,NPopOrd),
 	N1 is N+1,
-	generate_generation(N1,G,NPopOrd).
+	G1 is G,
+	write('Generate '), write(N), write(':'), nl, write(Pop), nl)),
+	generate_generation(N1,G1,NPopOrd).
+
+generate_generation(N,G,Pop) :- generate_generation(N,G,Pop).
 
 give_head([H|_],H):-!.
+
+del_ev(Ind*_,Ind):-!.
 
 generate_points_cross(P1,P2):-
 	generate_points_cross1(P1,P2).
@@ -952,6 +965,10 @@ preencheh([],[]).
 preencheh([_|R1],[h|R2]):-
 	preencheh(R1,R2).
 
+mix_list([E],[E]):-!.
+
+mix_list(L,NL):- length(L,V), V1 is V+1, random(1,V1,N), remove(N,L,E,L1), mix_list(L1,NL1),
+ NL = [E|NL1],!.
 
 sublist(L1,I1,I2,L):-
 	I1 < I2,!,
