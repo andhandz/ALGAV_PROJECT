@@ -1069,4 +1069,22 @@ mutation23(G1,1,[G2|Ind],G2,[G1|Ind]):-!.
 mutation23(G1,P,[G|Ind],G2,[G|NInd]):-
 	P1 is P-1,
 	mutation23(G1,P1,Ind,G2,NInd).
+
+num_of_trucks(LC,N):- sum_weights(LC,_,W), NW is W/4300, NW1 is NW*11/10, N is ceiling(NW1).
+
+part_deliveries_for_trucks(_,0,[]):-!.
+
+part_deliveries_for_trucks(LC,N,NL):- 
+one_truck(LC,N,0,L,NLC),N1 is N-1,
+part_deliveries_for_trucks(NLC,N1,NL1),
+NL = [L|NL1],!.
+
+
+one_truck(LC,N,I,NL,NLC):- ((In is I*N+1, 0 is  (I mod 2));(In is I*N+N)),
+length(LC,V),In=<V,one_truck(LC,N,I+1,NL1,NLC1), 
+remove(In,LC,Elem,_), NL = [Elem|NL1], remove(In,NLC1,_,NLC),!.
+
+one_truck(LC,_,_,[],LC):-!.
  
+ 
+check(L,L2,[L|L2]):-!.
