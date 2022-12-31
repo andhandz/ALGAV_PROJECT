@@ -327,13 +327,13 @@ dist(17, 0, 17).
 
 
 %delivery(<id>, <date>, <deliveryMass>, <warehouseId>, <placementTime>, <receiveTime>).
-delivery(4439, 20221205, 1000, 1, 8, 10).
-delivery(4438, 20221205, 1500, 9, 7, 9).
-delivery(4445, 20221205, 1000, 3, 5, 7).
-delivery(4443, 20221205, 1200, 8, 6, 8).
+/*delivery(4439, 20221205, 3000, 1, 8, 10).
+delivery(4438, 20221205, 3500, 9, 7, 9).
+delivery(4445, 20221205, 2000, 3, 5, 7).
+delivery(4443, 20221205, 1500, 8, 6, 8).
 delivery(4449, 20221205, 900, 11, 15, 20).
 delivery(4398, 20221205, 910, 17, 16, 20).
-/*delivery(4432, 20221205, 270, 14, 14, 18).
+delivery(4432, 20221205, 270, 14, 14, 18).
 delivery(4437, 20221205, 180, 12, 9, 11).
 delivery(4451, 20221205, 220, 6, 9, 12).
 delivery(4452, 20221205, 390, 13, 21, 26).
@@ -343,6 +343,57 @@ delivery(4399, 20221205, 260, 15, 13, 18).
 delivery(4454, 20221205, 350, 10, 18, 22).
 delivery(4446, 20221205, 260, 4, 14, 17).
 delivery(4456, 20221205, 330, 16, 17, 21).*/
+
+/*delivery(6439, 20230110, 200, 1, 8, 10).
+delivery(6438, 20230110, 750, 9, 25, 30).
+delivery(6445, 20230110, 1600, 3, 53, 62).
+delivery(6443, 20230110, 120, 8, 6, 8).
+delivery(6449, 20230110, 300, 11, 15, 20).
+delivery(6398, 20230110, 310, 17, 16, 20).
+delivery(6432, 20230110, 1700, 14, 55, 65).
+delivery(6437, 20230110, 900, 12, 30, 35).
+delivery(6451, 20230110, 440, 6, 18, 24).
+delivery(6452, 20230110, 1400, 13, 47, 58).
+delivery(6444, 20230110, 380, 2, 20, 25).
+delivery(6455, 20230110, 560, 7, 28, 38).
+delivery(6399, 20230110, 260, 15, 13, 18).
+delivery(6454, 20230110, 350, 10, 18, 22).
+delivery(6446, 20230110, 260, 4, 14, 17).
+delivery(6456, 20230110, 850, 16, 27, 31).*/
+
+/*delivery(5439, 20230109, 200, 1, 8, 10).
+delivery(5438, 20230109, 1500, 9, 50, 60).
+delivery(5445, 20230109, 1600, 3, 53, 62).
+delivery(5443, 20230109, 120, 8, 6, 8).
+delivery(5449, 20230109, 300, 11, 15, 20).
+delivery(5398, 20230109, 310, 17, 16, 20).
+delivery(5432, 20230109, 1700, 14, 55, 65).
+delivery(5437, 20230109, 1800, 12, 60, 70).
+delivery(5451, 20230109, 440, 6, 18, 24).
+delivery(5452, 20230109, 1400, 13, 47, 58).
+delivery(5444, 20230109, 380, 2, 20, 25).
+delivery(5455, 20230109, 560, 7, 28, 38).
+delivery(5399, 20230109, 260, 15, 13, 18).
+delivery(5454, 20230109, 350, 10, 18, 22).
+delivery(5446, 20230109, 260, 4, 14, 17).
+delivery(5456, 20230109, 1300, 16, 45, 55).*/
+
+delivery(7439, 20230111, 2200, 1, 72, 82).
+delivery(7438, 20230111, 3000, 9, 95, 110).
+delivery(7445, 20230111, 380, 3, 21, 26).
+delivery(7443, 20230111, 120, 8, 6, 8).
+delivery(7449, 20230111, 300, 11, 15, 20).
+delivery(7398, 20230111, 310, 17, 16, 20).
+delivery(7432, 20230111, 1700, 14, 55, 65).
+delivery(7437, 20230111, 250, 12, 13, 16).
+delivery(7451, 20230111, 1440, 6, 48, 59).
+delivery(7452, 20230111, 1400, 13, 47, 58).
+delivery(7444, 20230111, 380, 2, 20, 25).
+delivery(7455, 20230111, 560, 7, 28, 38).
+delivery(7399, 20230111, 260, 15, 13, 18).
+delivery(7454, 20230111, 350, 10, 18, 22).
+delivery(7446, 20230111, 260, 4, 14, 17).
+delivery(7456, 20230111, 1500, 16, 50, 59).
 
 truck(eTruck01).
 truck(eTruck02).
@@ -1074,8 +1125,9 @@ part_deliveries_for_trucks(_,0,[]):-!.
 
 part_deliveries_for_trucks(LC,N,NL):- 
 one_truck(LC,N,0,L,NLC),N1 is N-1,
-part_deliveries_for_trucks(NLC,N1,NL1),
-NL = [L|NL1],!.
+sum_weights(L,_,W),((W>4300,NN is N+1, part_deliveries_for_trucks(LC,NN,NL));
+(part_deliveries_for_trucks(NLC,N1,NL1),
+NL = [L|NL1])),!.
 
 
 one_truck(LC,N,I,NL,NLC):- ((In is I*N+1, 0 is  (I mod 2));(In is I*N+N)),
@@ -1091,8 +1143,8 @@ sort_by_weight(NL,SL1), SL = [C|SL1],!.
 
 generate_for_serveral_trucks(FL):- 
 init, findall(City,delivery(_,_,_,City,_,_),LC),
-sort_by_weight(LC,SL), num_of_trucks(SL,N),
-part_deliveries_for_trucks(SL,N,PL), generate_for_truck(PL,FL).
+sort_by_weight(LC,SL), reverse(SL,RSL), num_of_trucks(RSL,N),
+part_deliveries_for_trucks(RSL,N,PL), generate_for_truck(PL,FL).
 
 generate_for_truck([],[]):-!.
 
@@ -1104,5 +1156,9 @@ generate_for_truck([H|T],NL):- generate_for_truck(T,NL1),
  generate_generation(H,0,NG,PopOrd,FP),
  NL = [FP|NL1],!.
 
+give_best_paths(FL):- generate_for_serveral_trucks(L), create_list(L,FL1), reverse(FL1,FL),!.
 
+create_list([],[]):-!.
+
+create_list([H|T],[FH|T1]):- give_head(H,H1), create_list(T,T1), del_ev(H1,FH),!.
 
