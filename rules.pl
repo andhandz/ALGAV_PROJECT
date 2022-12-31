@@ -327,12 +327,12 @@ dist(17, 0, 17).
 
 
 %delivery(<id>, <date>, <deliveryMass>, <warehouseId>, <placementTime>, <receiveTime>).
-delivery(4439, 20221205, 200, 1, 8, 10).
-delivery(4438, 20221205, 150, 9, 7, 9).
-delivery(4445, 20221205, 100, 3, 5, 7).
-delivery(4443, 20221205, 120, 8, 6, 8).
-delivery(4449, 20221205, 300, 11, 15, 20).
-delivery(4398, 20221205, 310, 17, 16, 20).
+delivery(4439, 20221205, 1000, 1, 8, 10).
+delivery(4438, 20221205, 1500, 9, 7, 9).
+delivery(4445, 20221205, 1000, 3, 5, 7).
+delivery(4443, 20221205, 1200, 8, 6, 8).
+delivery(4449, 20221205, 900, 11, 15, 20).
+delivery(4398, 20221205, 910, 17, 16, 20).
 /*delivery(4432, 20221205, 270, 14, 14, 18).
 delivery(4437, 20221205, 180, 12, 9, 11).
 delivery(4451, 20221205, 220, 6, 9, 12).
@@ -780,9 +780,8 @@ find_the_lightest([H|LC],C,V):- find_the_lightest(LC,C1,V1), delivery(_,_,W,H,_,
 
 /* Combine Heuristic*/
 
-combine_heuristic(Time,LCharging,FL):-
+combine_heuristic(LC,Time,LCharging,FL):-
  get_time(Ti),
- findall(City,delivery(_,_,_,City,_,_),LC),
  factory(SP),
  combine_queue(LC,LC,NL,_,_),
  reverse(NL,NL1),
@@ -834,23 +833,23 @@ init:-write('Number of New Generations: '),read(NG), 			(retract(generation(_));
 
 generate:-
 	init,
-	generate_population(Pop),
+	findall(City,delivery(_,_,_,City,_,_),LC),
+	generate_population(LC,Pop),
 	write('Pop='),write(Pop),nl,
 	evaluate_population(Pop,PopEv),
 	write('PopEv='),write(PopEv),nl,
 	order_population(PopEv,PopOrd),
 	generation(NG),
-	generate_generation(0,NG,PopOrd).
+	generate_generation(LC,0,NG,PopOrd,_).
 
-generate_population(Pop):-
+generate_population(LC,Pop):-
 	population(CurPop),
- 	findall(City,delivery(_,_,_,City,_,_),LC),
  	length(LC,Len),
 	generate_population(CurPop,LC,Len,Pop).
 
 generate_population(0,_,_,[]):-!.
 
-generate_population(CurPop,LC,Len,[Ind|Rest]):- combine_heuristic(_,_,Ind), CurPop1 is CurPop - 1, population(Pop), CurPop is Pop, generate_population(CurPop1,LC,Len,Rest).
+generate_population(CurPop,LC,Len,[Ind|Rest]):- combine_heuristic(LC,_,_,Ind), CurPop1 is CurPop - 1, population(Pop), CurPop is Pop, generate_population(CurPop1,LC,Len,Rest).
 
 generate_population(CurPop,LC,Len,[Ind|Rest]):-
 	CurPop1 is CurPop-1,
@@ -899,21 +898,21 @@ bexchange([X*VX,Y*VY|L1],[Y*VY|L2]):-
 bexchange([X|L1],[X|L2]):-bexchange(L1,L2).
 
 
-generate_generation(G,G,Pop):-!,
+generate_generation(_,G,G,Pop,FPop):-!, FPop = Pop,
 	write('Generate'), write(G), write(':'), nl, write(Pop), nl.
 
-generate_generation(-1,G,Pop):-!,
+generate_generation(_,-1,G,Pop,FPop):-!, FPop = Pop,
 	write('Generate'), write(G), write(':'), nl, write(Pop), nl, write('Exit condition achived').
 
 
-generate_generation(N,G,Pop):-
-	combine_heuristic(T,_,_),
+generate_generation(LC,N,G,Pop,FPop):-
+	combine_heuristic(LC,T,_,_),
 	give_head(Pop,H),
 	del_ev(H,NH),
 	calculate_cost_2(NH,V,_),
 	((V+100<T, N1 is -1, NPopOrd = Pop, G1 is N, !);
-	(mix_list(Pop,MPop), cross(MPop,NPop1),
-	mutation(NPop1,NPop),
+	(mix_list(Pop,MPop), cross(LC,MPop,NPop1),
+	mutation(LC,NPop1,NPop),
 	evaluate_population(NPop,NPopEv),
 	population(Num), Num1 is Num + 1,
 	order_population(NPopEv,NPopEvOr),
@@ -925,40 +924,41 @@ generate_generation(N,G,Pop):-
 	N1 is N+1,
 	G1 is G,
 	write('Generate '), write(N), write(':'), nl, write(Pop), nl)),
-	generate_generation(N1,G1,NPopOrd).
+	FPop = Pop,
+	generate_generation(LC,N1,G1,NPopOrd,_).
 
-generate_generation(N,G,Pop) :- generate_generation(N,G,Pop).
+generate_generation(LC,N,G,Pop,FPop) :- generate_generation(LC,N,G,Pop,FPop).
 
 give_head([H|_],H):-!.
 
 del_ev(Ind*_,Ind):-!.
 
-generate_points_cross(P1,P2):-
-	generate_points_cross1(P1,P2).
+generate_points_cross(LC,P1,P2):-
+	generate_points_cross1(LC,P1,P2).
 
-generate_points_cross1(P1,P2):-
- 	findall(City,delivery(_,_,_,City,_,_),LC),
+generate_points_cross1(LC,P1,P2):-
  	length(LC,N),
 	NTemp is N+1,
+	N>0,
 	random(1,NTemp,P11),
 	random(1,NTemp,P21),
 	P11\==P21,!,
 	((P11<P21,!,P1=P11,P2=P21);(P1=P21,P2=P11)).
-generate_points_cross1(P1,P2):-
-	generate_points_cross1(P1,P2).
+generate_points_cross1(_,P1,P2):-
+	generate_points_cross1(_,P1,P2).
 
 
-cross([],[]).
-cross([Ind*_],[Ind]).
-cross([Ind1*_,Ind2*_|Rest],[NInd1,NInd2|Rest1]):-
-	generate_points_cross(P1,P2),
+cross(_,[],[]).
+cross(_,[Ind*_],[Ind]).
+cross(LC,[Ind1*_,Ind2*_|Rest],[NInd1,NInd2|Rest1]):-
+	generate_points_cross(LC,P1,P2),
 	prob_cross(Pcrs),random(0.0,1.0,Pc),
 	((Pc =< Pcrs,!,
-        crs(Ind1,Ind2,P1,P2,NInd1),
-	  crs(Ind2,Ind1,P1,P2,NInd2))
+        crs(LC,Ind1,Ind2,P1,P2,NInd1),
+	  crs(LC,Ind2,Ind1,P1,P2,NInd2))
 	;
 	(NInd1=Ind1,NInd2=Ind2)),
-	cross(Rest,Rest1).
+	cross(LC,Rest,Rest1).
 
 preencheh([],[]).
 
@@ -1012,14 +1012,13 @@ eliminate([X|R1],L,[X|R2]):-
 eliminate([_|R1],L,R2):-
 	eliminate(R1,L,R2).
 
-insert([],L,_,L):-!.
-insert([X|R],L,N,L2):-
- 	findall(City,delivery(_,_,_,City,_,_),LC),
+insert(_,[],L,_,L):-!.
+insert(LC,[X|R],L,N,L2):-
  	length(LC,T),
 	((N>T,!,N1 is N mod T);N1 = N),
 	insert1(X,N1,L,L1),
 	N2 is N + 1,
-	insert(R,L1,N2,L2).
+	insert(LC,R,L1,N2,L2).
 
 
 insert1(X,1,L,[X|L]):-!.
@@ -1027,15 +1026,14 @@ insert1(X,N,[Y|L],[Y|L1]):-
 	N1 is N-1,
 	insert1(X,N1,L,L1).
 
-crs(Ind1,Ind2,P1,P2,NInd11):-
+crs(LC,Ind1,Ind2,P1,P2,NInd11):-
 	sublist(Ind1,P1,P2,Sub1),
- 	findall(City,delivery(_,_,_,City,_,_),LC),
  	length(LC,Len),
 	R is Len-P2,
 	rotate_right(Ind2,R,Ind21),
 	eliminate(Ind21,Sub1,Sub2),
 	P3 is P2 + 1,
-	insert(Sub2,Sub1,P3,NInd1),
+	insert(LC,Sub2,Sub1,P3,NInd1),
 	eliminate1(NInd1,NInd11).
 
 
@@ -1047,15 +1045,15 @@ eliminate1([h|R1],R2):-!,
 eliminate1([X|R1],[X|R2]):-
 	eliminate1(R1,R2).
 
-mutation([],[]).
-mutation([Ind|Rest],[NInd|Rest1]):-
+mutation(_,[],[]).
+mutation(LC,[Ind|Rest],[NInd|Rest1]):-
 	prob_mut(Pmut),
 	random(0.0,1.0,Pm),
-	((Pm < Pmut,!,mutation1(Ind,NInd));NInd = Ind),
-	mutation(Rest,Rest1).
+	((Pm < Pmut,!,mutation1(LC,Ind,NInd));NInd = Ind),
+	mutation(LC,Rest,Rest1).
 
-mutation1(Ind,NInd):-
-	generate_points_cross(P1,P2),
+mutation1(LC,Ind,NInd):-
+	generate_points_cross(LC,P1,P2),
 	mutation22(Ind,P1,P2,NInd).
 
 mutation22([G1|Ind],1,P2,[G2|NInd]):-
@@ -1085,6 +1083,26 @@ length(LC,V),In=<V,one_truck(LC,N,I+1,NL1,NLC1),
 remove(In,LC,Elem,_), NL = [Elem|NL1], remove(In,NLC1,_,NLC),!.
 
 one_truck(LC,_,_,[],LC):-!.
- 
- 
-check(L,L2,[L|L2]):-!.
+
+sort_by_weight([A],[A]):-!.
+
+sort_by_weight(L,SL):- find_the_lightest(L,C,_), list_delete(C,L,NL),
+sort_by_weight(NL,SL1), SL = [C|SL1],!.
+
+generate_for_serveral_trucks(FL):- 
+init, findall(City,delivery(_,_,_,City,_,_),LC),
+sort_by_weight(LC,SL), num_of_trucks(SL,N),
+part_deliveries_for_trucks(SL,N,PL), generate_for_truck(PL,FL).
+
+generate_for_truck([],[]):-!.
+
+generate_for_truck([H|T],NL):- generate_for_truck(T,NL1),
+ generate_population(H,Pop),
+ evaluate_population(Pop,PopEv),
+ order_population(PopEv,PopOrd),
+ generation(NG),
+ generate_generation(H,0,NG,PopOrd,FP),
+ NL = [FP|NL1],!.
+
+
+
