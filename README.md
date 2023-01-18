@@ -1,5 +1,17 @@
 # ALGAV_PROJECT  
 
+# SET UP  
+<a href='https://wwu-pi.github.io/tutorials/lectures/lsp/010_install_swi_prolog.html'>Install prolog if you don't have it</a>
+1. Clone the project  
+2. Go into the project directory  
+3. Write in console:```swipl -s rules.pl```  
+4. Then in swipl: ```?- server(5000).```  
+5. Now you need to give the params for GA, ***my proposition***:  
+- Number of New Generations: 5.  
+- Population Size: 5.  
+- Crossover Probability(%): 50.  
+- Mutation Probability(%): 50.  
+6. You can check the distribution results on *localhost:5000/paths*  
 # USE CASES  
 <p align="center">
 <b>a) The receiving data on deliveries to be made by 1 truck and on sections between warehouses: generating all possible trajectories through sequences of warehouses where deliveries must be made:</b>
