@@ -1,4 +1,36 @@
+:- use_module(library(http/thread_httpd)).
+:- use_module(library(http/http_dispatch)).
 
+%:- use_module(library(http/http_unix_daemon)).
+:- use_module(library(http/http_parameters)).
+:- use_module(library(http/http_open)).
+:- use_module(library(http/http_cors)).
+:- use_module(library(date)).
+:- use_module(library(random)).
+
+% Bibliotecas JSON
+:- use_module(library(http/json_convert)).
+:- use_module(library(http/http_json)).
+:- use_module(library(http/json)).
+:- json_object agenda_maq_json_array(array:list(agenda_maq_json)).
+:- json_object agenda_maq_json(maquina:string,agenda_array:list(agenda_json)).
+:- json_object agenda_json(instanteInicial:float,instanteFinal:float,tipoProcessamento:string,lista:list(string)).
+:- set_setting(http:cors, [*]).
+
+:-http_handler('/paths',get_paths,[]).
+
+server(Port) :-
+	init,
+        http_server(http_dispatch, [port(Port)]).
+get_paths(Request):-
+    cors_enable(Request, [methods([get])]),
+    give_best_paths(FL),
+    prolog_to_json(FL,JSONObject),
+    reply_json(JSONObject, [json_object(dict)]).
+
+
+        
+        
 idStore('Arouca', 1).
 idStore('Espinho', 2).
 idStore('Gondomar', 3).
@@ -401,7 +433,11 @@ truck(eTruck03).
 truck(eTruck04).
 truck(eTruck05).
 
-characteristicsTruck(eTruck01, 7500, 4300, 80, 100, 60). /*truckname, tare, loadCap, totBattery, range, BatteryFrom20to80*/
+characteristicsTruck(eTruck01, 7500, 4300, 80, 100, 60,1). /*truckname, tare, loadCap, totBattery, range, BatteryFrom20to80, isActive(0/1)*/
+characteristicsTruck(eTruck02, 7500, 3300, 80, 100, 60,1).
+characteristicsTruck(eTruck03, 7500, 4800, 80, 100, 60,1).
+characteristicsTruck(eTruck04, 7500, 5100, 80, 100, 60,1).
+characteristicsTruck(eTruck05, 7500, 2300, 80, 100, 60,1).
 
 pathData(eTruck01,1,2,122,42,0).
 pathData(eTruck01,1,3,122,46,0).
@@ -708,7 +744,7 @@ TruckWeight is Weight+Tare.
 
 calculate_cost(LC,Cost):-
 sum_weights(LC,LW,_),
-characteristicsTruck(eTruck01,Tare,_,_,_,_),
+characteristicsTruck(eTruck01,Tare,_,_,_,_,_),
 add_TruckWeight(Tare,LW,LWT),
 factory(F),
 append([F|LC],[F],LCcomplete),
@@ -718,7 +754,7 @@ cost([_],[],0).
 cost([C1,C2|LC],[WT|LWT],Cost):-
 cost([C2|LC],LWT,Cost1),
 pathData(_,C1,C2,T,_,_),
-characteristicsTruck(eTruck01,Ta,ML,_,_,_),
+characteristicsTruck(eTruck01,Ta,ML,_,_,_,_),
 Cost is Cost1+T*WT/(Ta+ML).
 
 
@@ -740,7 +776,7 @@ write(Cost),nl);true).
 
 calculate_cost_2(LS,Time,LCharging):-
  sum_weights(LS,LW,_),
- characteristicsTruck(eTruck01,Tare,_,Energy,_,_),
+ characteristicsTruck(eTruck01,Tare,_,Energy,_,_,_),
  add_TruckWeight(Tare,LW,LWT),
  factory(SP),
  append([SP|LS],[SP],LScomplete),
@@ -748,7 +784,7 @@ calculate_cost_2(LS,Time,LCharging):-
  
 cost_2([_],_,_,0,[]).
 cost_2([S1,S2|LS], [WT|LWT], CEnergy, Time, LCharging):-
-pathData(_,S1,S2,T,En,Ex_T),characteristicsTruck(eTruck01,Ta,ML,E,_,TCharge),NEn is En*WT/(Ta+ML), 
+pathData(_,S1,S2,T,En,Ex_T),characteristicsTruck(eTruck01,Ta,ML,E,_,TCharge,_),NEn is En*WT/(Ta+ML), 
  ((CEnergy-NEn<E*2/10,!, ((S2 is 5, TCharge1 is (max(0,NEn+2/10*E-CEnergy))*TCharge/(6/10*E)); (TCharge1 is (E*8/10-CEnergy)*TCharge/(6/10*E))),
  E1 is max(2/10*E, 8/10*E- NEn), LCharging = [S1|LPreviousCharges]);
  (TCharge1 is 0, E1 is CEnergy-NEn, LCharging = LPreviousCharges)),
@@ -787,7 +823,7 @@ distance_heuristic(Time,LCharging,FL):-
  reverse(NL,NL1),
  FL = NL1,
  sum_weights(NL1,LW,_),
- characteristicsTruck(eTruck01,Tare,_,Energy,_,_),
+ characteristicsTruck(eTruck01,Tare,_,Energy,_,_,_),
  add_TruckWeight(Tare,LW,LWT),
  append([SP|NL1],[SP],LComplete),
  cost_2(LComplete, LWT, Energy, Time, LCharging),!, get_time(Tf),
@@ -815,7 +851,7 @@ weight_heuristic(Time,LCharging,FL):-
  weight_queue(LC,LC,NL,_),
  sum_weights(NL,LW,_),
  FL = NL,
- characteristicsTruck(eTruck01,Tare,_,Energy,_,_),
+ characteristicsTruck(eTruck01,Tare,_,Energy,_,_,_),
  add_TruckWeight(Tare,LW,LWT),
  append([SP|NL],[SP],LComplete),
  cost_2(LComplete, LWT, Energy, Time, LCharging),!, get_time(Tf),
@@ -838,7 +874,7 @@ combine_heuristic(LC,Time,LCharging,FL):-
  reverse(NL,NL1),
  sum_weights(NL1,LW,_),
  FL = NL1,
- characteristicsTruck(eTruck01,Tare,_,Energy,_,_),
+ characteristicsTruck(eTruck01,Tare,_,Energy,_,_,_),
  add_TruckWeight(Tare,LW,LWT),
  append([SP|NL1],[SP],LComplete),
  cost_2(LComplete, LWT, Energy, Time, LCharging),!, get_time(Tf),
@@ -886,9 +922,7 @@ generate:-
 	init,
 	findall(City,delivery(_,_,_,City,_,_),LC),
 	generate_population(LC,Pop),
-	write('Pop='),write(Pop),nl,
 	evaluate_population(Pop,PopEv),
-	write('PopEv='),write(PopEv),nl,
 	order_population(PopEv,PopOrd),
 	generation(NG),
 	generate_generation(LC,0,NG,PopOrd,_).
@@ -949,11 +983,9 @@ bexchange([X*VX,Y*VY|L1],[Y*VY|L2]):-
 bexchange([X|L1],[X|L2]):-bexchange(L1,L2).
 
 
-generate_generation(_,G,G,Pop,FPop):-!, FPop = Pop,
-	write('Generate'), write(G), write(':'), nl, write(Pop), nl.
+generate_generation(_,G,G,Pop,FPop):-!, FPop = Pop.
 
-generate_generation(_,-1,G,Pop,FPop):-!, FPop = Pop,
-	write('Generate'), write(G), write(':'), nl, write(Pop), nl, write('Exit condition achived').
+generate_generation(_,-1,G,Pop,FPop):-!, FPop = Pop.
 
 
 generate_generation(LC,N,G,Pop,FPop):-
@@ -973,8 +1005,7 @@ generate_generation(LC,N,G,Pop,FPop):-
 	NPopEv2 = [H|NPopEv1],
 	order_population(NPopEv2,NPopOrd),
 	N1 is N+1,
-	G1 is G,
-	write('Generate '), write(N), write(':'), nl, write(Pop), nl)),
+	G1 is G)),
 	FPop = Pop,
 	generate_generation(LC,N1,G1,NPopOrd,_).
 
@@ -1119,14 +1150,18 @@ mutation23(G1,P,[G|Ind],G2,[G|NInd]):-
 	P1 is P-1,
 	mutation23(G1,P1,Ind,G2,NInd).
 
-num_of_trucks(LC,N):- sum_weights(LC,_,W), NW is W/4300, NW1 is NW*11/10, N is ceiling(NW1).
+num_of_trucks(LC,N):- sum_weights(LC,_,W), W1 is W*11/10, findall(C,characteristicsTruck(_,_,C,_,_,_,1),LW), count_trucks(W1,LW,V), N is V.
 
-part_deliveries_for_trucks(_,0,[]):-!.
+count_trucks(C_W,_,0):- C_W<0,!.
 
-part_deliveries_for_trucks(LC,N,NL):- 
+count_trucks(W,[H|T],V):- NW is W-H, count_trucks(NW,T,V1), V is V1+1.
+
+part_deliveries_for_trucks(_,0,_,[]):-!.
+
+part_deliveries_for_trucks(LC,N,[H|T],NL):- 
 one_truck(LC,N,0,L,NLC),N1 is N-1,
-sum_weights(L,_,W),((W>4300,NN is N+1, part_deliveries_for_trucks(LC,NN,NL));
-(part_deliveries_for_trucks(NLC,N1,NL1),
+sum_weights(L,_,W),((W>H,NN is N+1, part_deliveries_for_trucks(LC,NN,[H|T],NL));
+(part_deliveries_for_trucks(NLC,N1,T,NL1),
 NL = [L|NL1])),!.
 
 
@@ -1142,9 +1177,10 @@ sort_by_weight(L,SL):- find_the_lightest(L,C,_), list_delete(C,L,NL),
 sort_by_weight(NL,SL1), SL = [C|SL1],!.
 
 generate_for_serveral_trucks(FL):- 
-init, findall(City,delivery(_,_,_,City,_,_),LC),
-sort_by_weight(LC,SL), reverse(SL,RSL), num_of_trucks(RSL,N),
-part_deliveries_for_trucks(RSL,N,PL), generate_for_truck(PL,FL).
+findall(City,delivery(_,_,_,City,_,_),LC),
+sort_by_weight(LC,SL), reverse(SL,RSL),
+num_of_trucks(RSL,N),findall(C,characteristicsTruck(_,_,C,_,_,_,1),LW),
+part_deliveries_for_trucks(RSL,N,LW,PL), generate_for_truck(PL,FL).
 
 generate_for_truck([],[]):-!.
 
